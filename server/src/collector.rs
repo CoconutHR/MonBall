@@ -1,7 +1,7 @@
 use crate::types::SystemStats;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use sysinfo::{CpuRefreshKind, Disks, Networks, RefreshKind, System};
+use sysinfo::{Disks, Networks, System};
 use tokio::time::sleep;
 
 pub struct StatsCollector {
@@ -34,18 +34,12 @@ impl StatsCollector {
     }
 
     pub async fn start_background_task(self: Arc<Self>) {
-        // 只刷新需要的组件，降低 CPU 占用
-        let mut sys = System::new_with_specifics(
-            RefreshKind::nothing()
-                .with_cpu(CpuRefreshKind::everything())
-                .with_memory(),
-        );
+        let mut sys = System::new_all();
         let mut networks = Networks::new_with_refreshed_list();
 
         // 首次采样建立基线
         sleep(Duration::from_millis(500)).await;
-        sys.refresh_cpu_all();
-        sys.refresh_memory();
+        sys.refresh_all();
         networks.refresh();
 
         let total_rx: u64 = networks.iter().map(|(_, d)| d.received()).sum();
@@ -57,9 +51,10 @@ impl StatsCollector {
             .unwrap_or(Duration::ZERO);
 
         loop {
-            // 1. CPU & Memory
-            sys.refresh_cpu_all();
-            sys.refresh_memory();
+            // 1. CPU & Memory - 使用 refresh_all 刷新所有指标
+            sys.refresh_all();
+
+            // CPU 使用率：各 CPU 核心平均值
             let cpu = sys.global_cpu_usage();
             let mem = if sys.total_memory() > 0 {
                 (sys.used_memory() as f32 / sys.total_memory() as f32) * 100.0
