@@ -4,6 +4,9 @@
   "windows": ["overlay", "config"],
   "permissions": [
     "core:default",
+    "core:event:default",
+    "core:event:allow-listen",
+    "core:event:allow-emit",
     "core:window:default",
     "core:window:allow-start-dragging",
     "core:window:allow-set-ignore-cursor-events",

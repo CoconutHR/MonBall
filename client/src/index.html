@@ -61,6 +61,7 @@
     <script>
         // Tauri v2 全局 API（withGlobalTauri: true）
         const { invoke } = window.__TAURI__.core;
+        const { listen } = window.__TAURI__.event;
         const { getCurrentWindow } = window.__TAURI__.window;
 
         const appWindow = getCurrentWindow();
@@ -92,12 +93,12 @@
             container.style.background = 'rgba(15, 15, 20, ' + val + ')';
         }
 
-        // 暴露给 Rust 端调用的透明度调节函数
-        window.__adjustOpacity = function(delta) {
-            applyOpacity((config.opacity || 0.65) + delta);
+        // 监听来自 Rust 端的透明度调节事件
+        listen('adjust-opacity', function(event) {
+            applyOpacity((config.opacity || 0.65) + event.payload);
             // 持久化到配置文件
             invoke('save_config', { config: config }).catch(function() {});
-        };
+        });
 
         // 根据配置渲染指标行
         function render() {

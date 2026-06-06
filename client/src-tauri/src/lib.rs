@@ -3,7 +3,7 @@
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::TrayIconBuilder,
-    Manager,
+    Emitter, Manager,
 };
 use std::fs;
 use std::path::PathBuf;
@@ -100,14 +100,10 @@ pub fn run() {
                         }
                     }
                     "opacity_up" => {
-                        if let Some(win) = app.get_webview_window("overlay") {
-                            let _ = win.eval("window.__adjustOpacity(0.1)");
-                        }
+                        let _ = app.emit("adjust-opacity", 0.1f64);
                     }
                     "opacity_down" => {
-                        if let Some(win) = app.get_webview_window("overlay") {
-                            let _ = win.eval("window.__adjustOpacity(-0.1)");
-                        }
+                        let _ = app.emit("adjust-opacity", -0.1f64);
                     }
                     "config" => {
                         if let Some(win) = app.get_webview_window("config") {
