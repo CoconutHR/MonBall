@@ -70,6 +70,12 @@ jobs:
         working-directory: client
         run: npm install
 
+      - name: Clean old bundle artifacts
+        shell: pwsh
+        run: |
+          $bundlePath = "client/src-tauri/target/release/bundle"
+          if (Test-Path $bundlePath) { Remove-Item -Recurse -Force $bundlePath }
+
       - name: Build Tauri app
         working-directory: client
         run: npx tauri build
