@@ -44,9 +44,23 @@
             flex-shrink: 0;
         }
         .item-row .item-label {
-            flex: 1;
+            width: 40px;
             font-size: 14px;
-            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .item-row input[type="text"] {
+            flex: 1;
+            padding: 4px 6px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: #0f0f1a;
+            color: #fff;
+            font-size: 12px;
+            outline: none;
+            min-width: 50px;
+        }
+        .item-row input[type="text"]:focus {
+            border-color: #4a9eff;
         }
         .item-row .item-controls {
             display: flex;
@@ -197,6 +211,7 @@
                 row.innerHTML =
                     '<input type="checkbox" id="chk-' + i + '" ' + (item.show ? 'checked' : '') + ' />' +
                     '<span class="item-label">' + item.label + '</span>' +
+                    '<input type="text" id="dl-' + i + '" value="' + (item.displayLabel || '') + '" placeholder="' + item.label + '" title="悬浮窗显示名" />' +
                     '<div class="item-controls">' +
                         '<span class="ctrl-label">字号</span>' +
                         '<input type="number" id="fs-' + i + '" min="9" max="24" value="' + fontSize + '" />' +
@@ -227,9 +242,11 @@
                 const cb = document.getElementById('chk-' + i);
                 const fs = document.getElementById('fs-' + i);
                 const clr = document.getElementById('clr-' + i);
+                const dl = document.getElementById('dl-' + i);
                 if (cb) item.show = cb.checked;
                 if (fs) item.fontSize = parseInt(fs.value) || 13;
                 if (clr) item.color = clr.value;
+                if (dl) item.displayLabel = dl.value.trim();
             });
             // 收集服务器设置
             config.server.ip = document.getElementById('server-ip').value.trim() || '127.0.0.1';

@@ -39,11 +39,11 @@ fn read_config(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
         // 默认配置
         Ok(serde_json::json!({
             "items": [
-                {"id": "cpu", "label": "CPU", "show": true, "fontSize": 13, "color": "#ffffff"},
-                {"id": "mem", "label": "MEM", "show": true, "fontSize": 13, "color": "#ffffff"},
-                {"id": "disk", "label": "DISK", "show": true, "fontSize": 13, "color": "#ffffff"},
-                {"id": "net", "label": "NET", "show": true, "fontSize": 13, "color": "#ffffff"},
-                {"id": "temp", "label": "TEMP", "show": true, "fontSize": 13, "color": "#ffffff"}
+                {"id": "cpu", "label": "CPU", "displayLabel": "", "show": true, "fontSize": 13, "color": "#ffffff"},
+                {"id": "mem", "label": "MEM", "displayLabel": "", "show": true, "fontSize": 13, "color": "#ffffff"},
+                {"id": "disk", "label": "DISK", "displayLabel": "", "show": true, "fontSize": 13, "color": "#ffffff"},
+                {"id": "net", "label": "NET", "displayLabel": "", "show": true, "fontSize": 13, "color": "#ffffff"},
+                {"id": "temp", "label": "TEMP", "displayLabel": "", "show": true, "fontSize": 13, "color": "#ffffff"}
             ],
             "server": {"ip": "127.0.0.1", "port": 26666, "token": "monball"},
             "opacity": 0.65

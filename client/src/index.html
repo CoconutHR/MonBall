@@ -118,8 +118,10 @@
                 const fontSize = (item.fontSize || 13) + 'px';
                 const color = item.color || '#ffffff';
 
+                const displayLabel = item.displayLabel || item.label;
+
                 row.innerHTML =
-                    '<span class="stat-label" style="font-size:' + (Math.max(9, (item.fontSize || 13) - 2)) + 'px; color:' + color + ';">' + item.label + '</span>' +
+                    '<span class="stat-label" style="font-size:' + (Math.max(9, (item.fontSize || 13) - 2)) + 'px; color:' + color + ';">' + displayLabel + '</span>' +
                     '<span class="stat-value" id="val-' + item.id + '" style="font-size:' + fontSize + '; color:' + color + ';">' + '--' + '</span>';
                 container.appendChild(row);
             });
