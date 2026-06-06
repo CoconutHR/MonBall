@@ -65,7 +65,8 @@
         let config = {
             items: [],
             server: { ip: '127.0.0.1', port: 26666, token: 'monball' },
-            opacity: 0.65
+            opacity: 0.65,
+            window: { x: null, y: null }
         };
 
         const container = document.getElementById('container');
@@ -75,12 +76,50 @@
         async function loadConfig() {
             try {
                 config = await invoke('read_config');
+                // 确保 window 字段存在
+                if (!config.window) config.window = { x: null, y: null };
             } catch (e) {
                 console.warn('加载配置失败，使用默认值:', e);
             }
             applyOpacity(config.opacity || 0.65);
             render();
+            // 恢复窗口位置
+            restoreWindowPosition();
         }
+
+        // 恢复窗口上次位置
+        async function restoreWindowPosition() {
+            if (config.window && config.window.x != null && config.window.y != null) {
+                try {
+                    await appWindow.setPosition(new window.__TAURI__.window.PhysicalPosition(
+                        config.window.x, config.window.y
+                    ));
+                } catch (e) {
+                    console.warn('恢复窗口位置失败:', e);
+                }
+            }
+        }
+
+        // 保存窗口位置（防抖）
+        let savePositionTimer = null;
+        async function saveWindowPosition() {
+            try {
+                const pos = await appWindow.outerPosition();
+                config.window = { x: pos.x, y: pos.y };
+                // 防抖：500ms 内多次移动只保存最后一次
+                if (savePositionTimer) clearTimeout(savePositionTimer);
+                savePositionTimer = setTimeout(function() {
+                    invoke('save_config', { config: config }).catch(function() {});
+                }, 500);
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        // 监听窗口移动事件
+        listen('tauri://move', function() {
+            saveWindowPosition();
+        });
 
         // 透明度控制 —— 仅作用于背景，不影响文本
         function applyOpacity(val) {
@@ -100,6 +139,7 @@
         listen('config-updated', function() {
             invoke('read_config').then(function(newConfig) {
                 config = newConfig;
+                if (!config.window) config.window = { x: null, y: null };
                 applyOpacity(config.opacity || 0.65);
                 render();
             }).catch(function() {});
@@ -129,12 +169,15 @@
 
         // 更新数值（保持颜色不变，只更新文本内容）
         function updateStats(stats) {
+            const fmtTemp = function(v) { return v != null ? v.toFixed(0) + '°C' : 'N/A'; };
             const map = {
                 cpu: stats.cpu_usage.toFixed(1) + '%',
                 mem: stats.mem_usage.toFixed(1) + '%',
                 disk: stats.disk_usage.toFixed(1) + '%',
                 net: formatNet(stats.net_rx_rate, stats.net_tx_rate),
-                temp: stats.cpu_temp != null ? stats.cpu_temp.toFixed(0) + '°C' : 'N/A'
+                cpu_temp: fmtTemp(stats.cpu_temp),
+                acpi_temp: fmtTemp(stats.acpi_temp),
+                wifi_temp: fmtTemp(stats.wifi_temp)
             };
             config.items.filter(i => i.show).forEach(item => {
                 const el = document.getElementById('val-' + item.id);

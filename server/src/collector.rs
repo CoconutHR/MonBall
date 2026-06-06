@@ -20,6 +20,8 @@ impl StatsCollector {
             net_rx_rate: 0,
             net_tx_rate: 0,
             cpu_temp: None,
+            acpi_temp: None,
+            wifi_temp: None,
             timestamp: 0,
         };
         Self {
@@ -53,10 +55,9 @@ impl StatsCollector {
             .unwrap_or(Duration::ZERO);
 
         loop {
-            // 1. CPU & Memory - 使用 refresh_all 刷新所有指标
+            // 1. CPU & Memory
             sys.refresh_all();
 
-            // CPU 使用率：各 CPU 核心平均值
             let cpu = sys.global_cpu_usage();
             let mem = if sys.total_memory() > 0 {
                 (sys.used_memory() as f32 / sys.total_memory() as f32) * 100.0
@@ -79,13 +80,36 @@ impl StatsCollector {
                 })
                 .unwrap_or(0.0);
 
-            // 3. CPU 温度
+            // 3. 温度传感器
             components.refresh();
+
+            // CPU Package 温度 (x86_pkg_temp)
             let cpu_temp = components
                 .iter()
                 .find(|c| {
                     let label = c.label().to_lowercase();
-                    label.contains("cpu") || label.contains("core") || label.contains("package")
+                    label.contains("cpu")
+                        || label.contains("core")
+                        || label.contains("package")
+                        || label.contains("pkg")
+                })
+                .map(|c| c.temperature());
+
+            // ACPI 主板温度 (acpitz)
+            let acpi_temp = components
+                .iter()
+                .find(|c| {
+                    let label = c.label().to_lowercase();
+                    label.contains("acpitz") || label.contains("acpi")
+                })
+                .map(|c| c.temperature());
+
+            // WiFi 模块温度 (iwlwifi)
+            let wifi_temp = components
+                .iter()
+                .find(|c| {
+                    let label = c.label().to_lowercase();
+                    label.contains("iwlwifi") || label.contains("wifi")
                 })
                 .map(|c| c.temperature());
 
@@ -119,7 +143,7 @@ impl StatsCollector {
 
             let timestamp = now.as_secs();
 
-            // 更新共享状态（防御性处理，避免 panic）
+            // 更新共享状态
             if let Ok(mut guard) = self.stats.lock() {
                 guard.cpu_usage = cpu;
                 guard.mem_usage = mem;
@@ -127,6 +151,8 @@ impl StatsCollector {
                 guard.net_rx_rate = rx_rate;
                 guard.net_tx_rate = tx_rate;
                 guard.cpu_temp = cpu_temp;
+                guard.acpi_temp = acpi_temp;
+                guard.wifi_temp = wifi_temp;
                 guard.timestamp = timestamp;
             }
 

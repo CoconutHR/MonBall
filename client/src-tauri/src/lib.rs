@@ -43,10 +43,13 @@ fn read_config(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
                 {"id": "mem", "label": "MEM", "displayLabel": "", "show": true, "fontSize": 13, "color": "#ffffff"},
                 {"id": "disk", "label": "DISK", "displayLabel": "", "show": true, "fontSize": 13, "color": "#ffffff"},
                 {"id": "net", "label": "NET", "displayLabel": "", "show": true, "fontSize": 13, "color": "#ffffff"},
-                {"id": "temp", "label": "TEMP", "displayLabel": "", "show": true, "fontSize": 13, "color": "#ffffff"}
+                {"id": "cpu_temp", "label": "CPU温度", "displayLabel": "", "show": true, "fontSize": 13, "color": "#ffffff"},
+                {"id": "acpi_temp", "label": "主板温度", "displayLabel": "", "show": false, "fontSize": 13, "color": "#ffffff"},
+                {"id": "wifi_temp", "label": "WiFi温度", "displayLabel": "", "show": false, "fontSize": 13, "color": "#ffffff"}
             ],
             "server": {"ip": "127.0.0.1", "port": 26666, "token": "monball"},
-            "opacity": 0.65
+            "opacity": 0.65,
+            "window": {"x": null, "y": null}
         }))
     }
 }
