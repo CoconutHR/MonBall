@@ -172,6 +172,7 @@
 
     <script>
         const { invoke } = window.__TAURI__.core;
+        const { emit } = window.__TAURI__.event;
         const { getCurrentWindow } = window.__TAURI__.window;
 
         const appWindow = getCurrentWindow();
@@ -238,6 +239,8 @@
             config.opacity = parseInt(document.getElementById('opacity-slider').value) / 100;
 
             await invoke('save_config', { config: config });
+            // 通知 overlay 窗口刷新配置
+            await emit('config-updated');
             appWindow.hide();
         };
 

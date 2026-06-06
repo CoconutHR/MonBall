@@ -17,10 +17,9 @@
             flex-direction: column;
             padding: 12px 14px;
             background: rgba(15, 15, 20, 0.65);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             border: none;
-            border-radius: 10px;
+            outline: none;
+            border-radius: 0;
             width: 100%;
             height: 100%;
             gap: 6px;
@@ -97,6 +96,15 @@
             invoke('save_config', { config: config }).catch(function() {});
         });
 
+        // 监听配置更新事件（配置页面保存后通知 overlay 刷新）
+        listen('config-updated', function() {
+            invoke('read_config').then(function(newConfig) {
+                config = newConfig;
+                applyOpacity(config.opacity || 0.65);
+                render();
+            }).catch(function() {});
+        });
+
         // 根据配置渲染指标行（支持每项自定义字体大小和颜色）
         function render() {
             // 清除旧指标行，保留 error 元素
@@ -117,7 +125,7 @@
             });
         }
 
-        // 更新数值
+        // 更新数值（保持颜色不变，只更新文本内容）
         function updateStats(stats) {
             const map = {
                 cpu: stats.cpu_usage.toFixed(1) + '%',
@@ -171,15 +179,6 @@
             if (e.buttons === 1) {
                 appWindow.startDragging();
             }
-        });
-
-        // 监听配置变化（窗口获得焦点时重载）
-        window.addEventListener('focus', async function() {
-            try {
-                config = await invoke('read_config');
-                applyOpacity(config.opacity || 0.65);
-                render();
-            } catch (_) {}
         });
 
         // 启动
