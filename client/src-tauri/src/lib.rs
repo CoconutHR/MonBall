@@ -39,11 +39,11 @@ fn read_config(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
         // 默认配置
         Ok(serde_json::json!({
             "items": [
-                {"id": "cpu", "label": "CPU", "show": true},
-                {"id": "mem", "label": "MEM", "show": true},
-                {"id": "disk", "label": "DISK", "show": true},
-                {"id": "net", "label": "NET", "show": true},
-                {"id": "temp", "label": "TEMP", "show": true}
+                {"id": "cpu", "label": "CPU", "show": true, "fontSize": 13, "color": "#ffffff"},
+                {"id": "mem", "label": "MEM", "show": true, "fontSize": 13, "color": "#ffffff"},
+                {"id": "disk", "label": "DISK", "show": true, "fontSize": 13, "color": "#ffffff"},
+                {"id": "net", "label": "NET", "show": true, "fontSize": 13, "color": "#ffffff"},
+                {"id": "temp", "label": "TEMP", "show": true, "fontSize": 13, "color": "#ffffff"}
             ],
             "server": {"ip": "127.0.0.1", "port": 26666, "token": "monball"},
             "opacity": 0.65
@@ -77,8 +77,8 @@ pub fn run() {
             // 构建托盘菜单
             let lock_item = MenuItemBuilder::with_id("lock", "锁定 (穿透)").build(app)?;
             let unlock_item = MenuItemBuilder::with_id("unlock", "解锁 (可拖动)").build(app)?;
-            let opacity_up = MenuItemBuilder::with_id("opacity_up", "增加透明度").build(app)?;
-            let opacity_down = MenuItemBuilder::with_id("opacity_down", "降低透明度").build(app)?;
+            let opacity_up = MenuItemBuilder::with_id("opacity_up", "更透明").build(app)?;
+            let opacity_down = MenuItemBuilder::with_id("opacity_down", "更不透明").build(app)?;
             let config_item = MenuItemBuilder::with_id("config", "配置").build(app)?;
             let quit_item = MenuItemBuilder::with_id("quit", "退出").build(app)?;
             let menu = MenuBuilder::new(app)
@@ -100,10 +100,10 @@ pub fn run() {
                         }
                     }
                     "opacity_up" => {
-                        let _ = app.emit("adjust-opacity", 0.1f64);
+                        let _ = app.emit("adjust-opacity", -0.1f64);
                     }
                     "opacity_down" => {
-                        let _ = app.emit("adjust-opacity", -0.1f64);
+                        let _ = app.emit("adjust-opacity", 0.1f64);
                     }
                     "config" => {
                         if let Some(win) = app.get_webview_window("config") {

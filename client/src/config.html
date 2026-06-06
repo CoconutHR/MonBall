@@ -31,21 +31,54 @@
         .item-row {
             display: flex;
             align-items: center;
-            padding: 8px 12px;
+            padding: 10px 12px;
             background: rgba(255,255,255,0.05);
             border-radius: 6px;
             margin-bottom: 6px;
-        }
-        .item-row label {
-            flex: 1;
-            cursor: pointer;
-            font-size: 14px;
+            gap: 10px;
         }
         .item-row input[type="checkbox"] {
             width: 16px;
             height: 16px;
-            margin-right: 10px;
             cursor: pointer;
+            flex-shrink: 0;
+        }
+        .item-row .item-label {
+            flex: 1;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .item-row .item-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .item-row input[type="number"] {
+            width: 50px;
+            padding: 4px 6px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: #0f0f1a;
+            color: #fff;
+            font-size: 12px;
+            text-align: center;
+            outline: none;
+        }
+        .item-row input[type="number"]:focus {
+            border-color: #4a9eff;
+        }
+        .item-row input[type="color"] {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: none;
+            cursor: pointer;
+            padding: 2px;
+        }
+        .item-row .ctrl-label {
+            font-size: 11px;
+            color: #777;
         }
         .form-group {
             margin-bottom: 12px;
@@ -56,7 +89,8 @@
             color: #aaa;
             margin-bottom: 4px;
         }
-        .form-group input {
+        .form-group input[type="text"],
+        .form-group input[type="number"] {
             width: 100%;
             padding: 8px 10px;
             border: 1px solid #333;
@@ -103,12 +137,12 @@
     <h2>MonBall 配置</h2>
 
     <div class="section">
-        <div class="section-title">显示指标</div>
+        <div class="section-title">显示指标（勾选启用 / 字号 / 颜色）</div>
         <div id="item-list"></div>
     </div>
 
     <div class="section">
-        <div class="section-title">悬浮窗透明度</div>
+        <div class="section-title">悬浮窗背景透明度</div>
         <div class="form-group">
             <label>透明度: <span id="opacity-val">65%</span></label>
             <input type="range" id="opacity-slider" min="10" max="100" value="65" style="width:100%;cursor:pointer;" />
@@ -155,7 +189,19 @@
             config.items.forEach(function(item, i) {
                 const row = document.createElement('div');
                 row.className = 'item-row';
-                row.innerHTML = '<input type="checkbox" id="chk-' + i + '" ' + (item.show ? 'checked' : '') + ' /><label for="chk-' + i + '">' + item.label + '</label>';
+
+                const fontSize = item.fontSize || 13;
+                const color = item.color || '#ffffff';
+
+                row.innerHTML =
+                    '<input type="checkbox" id="chk-' + i + '" ' + (item.show ? 'checked' : '') + ' />' +
+                    '<span class="item-label">' + item.label + '</span>' +
+                    '<div class="item-controls">' +
+                        '<span class="ctrl-label">字号</span>' +
+                        '<input type="number" id="fs-' + i + '" min="9" max="24" value="' + fontSize + '" />' +
+                        '<span class="ctrl-label">颜色</span>' +
+                        '<input type="color" id="clr-' + i + '" value="' + color + '" />' +
+                    '</div>';
                 list.appendChild(row);
             });
         }
@@ -175,10 +221,14 @@
         });
 
         document.getElementById('save-btn').onclick = async function() {
-            // 收集指标显示状态
+            // 收集指标显示状态 + 字体大小 + 颜色
             config.items.forEach(function(item, i) {
                 const cb = document.getElementById('chk-' + i);
+                const fs = document.getElementById('fs-' + i);
+                const clr = document.getElementById('clr-' + i);
                 if (cb) item.show = cb.checked;
+                if (fs) item.fontSize = parseInt(fs.value) || 13;
+                if (clr) item.color = clr.value;
             });
             // 收集服务器设置
             config.server.ip = document.getElementById('server-ip').value.trim() || '127.0.0.1';

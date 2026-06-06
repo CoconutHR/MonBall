@@ -19,7 +19,7 @@
             background: rgba(15, 15, 20, 0.65);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: none;
             border-radius: 10px;
             width: 100%;
             height: 100%;
@@ -30,19 +30,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 13px;
             line-height: 1.5;
             padding: 2px 0;
         }
         .stat-label {
             opacity: 0.7;
-            font-size: 11px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
         }
         .stat-value {
             font-weight: 600;
-            font-size: 13px;
             font-family: 'Consolas', 'Courier New', monospace;
         }
         .error-msg {
@@ -86,7 +83,7 @@
             render();
         }
 
-        // 透明度控制
+        // 透明度控制 —— 仅作用于背景，不影响文本
         function applyOpacity(val) {
             val = Math.max(0.1, Math.min(1.0, val));
             config.opacity = val;
@@ -100,7 +97,7 @@
             invoke('save_config', { config: config }).catch(function() {});
         });
 
-        // 根据配置渲染指标行
+        // 根据配置渲染指标行（支持每项自定义字体大小和颜色）
         function render() {
             // 清除旧指标行，保留 error 元素
             const rows = container.querySelectorAll('.stat-row');
@@ -109,7 +106,13 @@
             config.items.filter(i => i.show).forEach(item => {
                 const row = document.createElement('div');
                 row.className = 'stat-row';
-                row.innerHTML = '<span class="stat-label">' + item.label + '</span><span class="stat-value" id="val-' + item.id + '">--</span>';
+
+                const fontSize = (item.fontSize || 13) + 'px';
+                const color = item.color || '#ffffff';
+
+                row.innerHTML =
+                    '<span class="stat-label" style="font-size:' + (Math.max(9, (item.fontSize || 13) - 2)) + 'px; color:' + color + ';">' + item.label + '</span>' +
+                    '<span class="stat-value" id="val-' + item.id + '" style="font-size:' + fontSize + '; color:' + color + ';">' + '--' + '</span>';
                 container.appendChild(row);
             });
         }
@@ -174,6 +177,7 @@
         window.addEventListener('focus', async function() {
             try {
                 config = await invoke('read_config');
+                applyOpacity(config.opacity || 0.65);
                 render();
             } catch (_) {}
         });
