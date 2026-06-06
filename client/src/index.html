@@ -123,24 +123,19 @@
             }
         }
 
-        // 保存窗口位置（防抖）
-        let savePositionTimer = null;
+        // 保存窗口位置（仅在锁定穿透时调用一次）
         async function saveWindowPosition() {
             try {
                 const pos = await appWindow.outerPosition();
                 config.window = { x: pos.x, y: pos.y };
-                // 防抖：500ms 内多次移动只保存最后一次
-                if (savePositionTimer) clearTimeout(savePositionTimer);
-                savePositionTimer = setTimeout(function() {
-                    invoke('save_config', { config: config }).catch(function() {});
-                }, 500);
+                await invoke('save_config', { config: config });
             } catch (e) {
                 // ignore
             }
         }
 
-        // 监听窗口移动事件
-        listen('tauri://move', function() {
+        // 监听锁定事件：窗口设为穿透时保存位置
+        listen('lock-overlay', function() {
             saveWindowPosition();
         });
 

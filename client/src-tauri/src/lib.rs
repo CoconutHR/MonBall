@@ -95,6 +95,8 @@ pub fn run() {
                     "lock" => {
                         if let Some(win) = app.get_webview_window("overlay") {
                             let _ = win.set_ignore_cursor_events(true);
+                            // 通知前端保存窗口位置
+                            let _ = app.emit("lock-overlay", ());
                         }
                     }
                     "unlock" => {
