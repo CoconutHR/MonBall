@@ -72,14 +72,20 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ steps.version.outputs.VERSION }}"
-          # Update tauri.conf.json
-          $conf = Get-Content "client/src-tauri/tauri.conf.json" -Raw | ConvertFrom-Json
-          $conf.version = $version
-          $conf | ConvertTo-Json -Depth 10 | Set-Content "client/src-tauri/tauri.conf.json"
-          # Update Cargo.toml
-          $cargo = Get-Content "client/src-tauri/Cargo.toml" -Raw
-          $cargo = $cargo -replace 'version = ".*?"', "version = `"$version`""
-          Set-Content "client/src-tauri/Cargo.toml" $cargo
+          # Update tauri.conf.json (simple regex replace to preserve file structure)
+          $conf = Get-Content "client/src-tauri/tauri.conf.json" -Raw
+          $conf = $conf -replace '"version":\s*"[^"]*"', "`"version`": `"$version`""
+          Set-Content "client/src-tauri/tauri.conf.json" $conf -NoNewline
+          # Update Cargo.toml (only first occurrence in [package] section)
+          $lines = Get-Content "client/src-tauri/Cargo.toml"
+          $replaced = $false
+          $newLines = $lines | ForEach-Object {
+            if (-not $replaced -and $_ -match '^version = "') {
+              $replaced = $true
+              "version = `"$version`""
+            } else { $_ }
+          }
+          Set-Content "client/src-tauri/Cargo.toml" $newLines
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
