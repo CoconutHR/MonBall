@@ -44,7 +44,7 @@ fn read_config(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
                 {"id": "disk", "label": "DISK", "show": true},
                 {"id": "net", "label": "NET", "show": true}
             ],
-            "server": {"ip": "127.0.0.1", "port": 8080, "token": "secret123"}
+            "server": {"ip": "127.0.0.1", "port": 26666, "token": "monball"}
         }))
     }
 }

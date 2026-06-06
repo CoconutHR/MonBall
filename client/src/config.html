@@ -115,11 +115,11 @@
         </div>
         <div class="form-group">
             <label>端口</label>
-            <input type="number" id="server-port" placeholder="8080" />
+            <input type="number" id="server-port" placeholder="26666" />
         </div>
         <div class="form-group">
             <label>Token</label>
-            <input type="text" id="server-token" placeholder="secret123" />
+            <input type="text" id="server-token" placeholder="monball" />
         </div>
     </div>
 
@@ -166,8 +166,8 @@
             });
             // 收集服务器设置
             config.server.ip = document.getElementById('server-ip').value.trim() || '127.0.0.1';
-            config.server.port = parseInt(document.getElementById('server-port').value) || 8080;
-            config.server.token = document.getElementById('server-token').value.trim() || 'secret123';
+            config.server.port = parseInt(document.getElementById('server-port').value) || 26666;
+            config.server.token = document.getElementById('server-token').value.trim() || 'monball';
 
             await invoke('save_config', { config: config });
             appWindow.hide();
