@@ -1,7 +1,7 @@
 use crate::types::SystemStats;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use sysinfo::{Disks, Networks, System};
+use sysinfo::{Components, Disks, Networks, System};
 use tokio::time::sleep;
 
 pub struct StatsCollector {
@@ -19,6 +19,7 @@ impl StatsCollector {
             disk_usage: 0.0,
             net_rx_rate: 0,
             net_tx_rate: 0,
+            cpu_temp: None,
             timestamp: 0,
         };
         Self {
@@ -36,6 +37,7 @@ impl StatsCollector {
     pub async fn start_background_task(self: Arc<Self>) {
         let mut sys = System::new_all();
         let mut networks = Networks::new_with_refreshed_list();
+        let mut components = Components::new_with_refreshed_list();
 
         // 首次采样建立基线
         sleep(Duration::from_millis(500)).await;
@@ -77,7 +79,17 @@ impl StatsCollector {
                 })
                 .unwrap_or(0.0);
 
-            // 3. Network 速率（精确差分）
+            // 3. CPU 温度
+            components.refresh();
+            let cpu_temp = components
+                .iter()
+                .find(|c| {
+                    let label = c.label().to_lowercase();
+                    label.contains("cpu") || label.contains("core") || label.contains("package")
+                })
+                .map(|c| c.temperature());
+
+            // 4. Network 速率（精确差分）
             networks.refresh();
             let current_rx: u64 = networks.iter().map(|(_, d)| d.received()).sum();
             let current_tx: u64 = networks.iter().map(|(_, d)| d.transmitted()).sum();
@@ -114,6 +126,7 @@ impl StatsCollector {
                 guard.disk_usage = disk;
                 guard.net_rx_rate = rx_rate;
                 guard.net_tx_rate = tx_rate;
+                guard.cpu_temp = cpu_temp;
                 guard.timestamp = timestamp;
             }
 

@@ -108,6 +108,14 @@
     </div>
 
     <div class="section">
+        <div class="section-title">悬浮窗透明度</div>
+        <div class="form-group">
+            <label>透明度: <span id="opacity-val">65%</span></label>
+            <input type="range" id="opacity-slider" min="10" max="100" value="65" style="width:100%;cursor:pointer;" />
+        </div>
+    </div>
+
+    <div class="section">
         <div class="section-title">服务器连接</div>
         <div class="form-group">
             <label>IP 地址</label>
@@ -156,7 +164,15 @@
             document.getElementById('server-ip').value = config.server.ip || '';
             document.getElementById('server-port').value = config.server.port || '';
             document.getElementById('server-token').value = config.server.token || '';
+            // 透明度
+            const opacityPct = Math.round((config.opacity || 0.65) * 100);
+            document.getElementById('opacity-slider').value = opacityPct;
+            document.getElementById('opacity-val').textContent = opacityPct + '%';
         }
+
+        document.getElementById('opacity-slider').addEventListener('input', function(e) {
+            document.getElementById('opacity-val').textContent = e.target.value + '%';
+        });
 
         document.getElementById('save-btn').onclick = async function() {
             // 收集指标显示状态
@@ -168,6 +184,8 @@
             config.server.ip = document.getElementById('server-ip').value.trim() || '127.0.0.1';
             config.server.port = parseInt(document.getElementById('server-port').value) || 26666;
             config.server.token = document.getElementById('server-token').value.trim() || 'monball';
+            // 收集透明度
+            config.opacity = parseInt(document.getElementById('opacity-slider').value) / 100;
 
             await invoke('save_config', { config: config });
             appWindow.hide();

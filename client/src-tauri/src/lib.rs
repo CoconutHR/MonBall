@@ -42,9 +42,11 @@ fn read_config(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
                 {"id": "cpu", "label": "CPU", "show": true},
                 {"id": "mem", "label": "MEM", "show": true},
                 {"id": "disk", "label": "DISK", "show": true},
-                {"id": "net", "label": "NET", "show": true}
+                {"id": "net", "label": "NET", "show": true},
+                {"id": "temp", "label": "TEMP", "show": true}
             ],
-            "server": {"ip": "127.0.0.1", "port": 26666, "token": "monball"}
+            "server": {"ip": "127.0.0.1", "port": 26666, "token": "monball"},
+            "opacity": 0.65
         }))
     }
 }
@@ -75,10 +77,12 @@ pub fn run() {
             // 构建托盘菜单
             let lock_item = MenuItemBuilder::with_id("lock", "锁定 (穿透)").build(app)?;
             let unlock_item = MenuItemBuilder::with_id("unlock", "解锁 (可拖动)").build(app)?;
+            let opacity_up = MenuItemBuilder::with_id("opacity_up", "增加透明度").build(app)?;
+            let opacity_down = MenuItemBuilder::with_id("opacity_down", "降低透明度").build(app)?;
             let config_item = MenuItemBuilder::with_id("config", "配置").build(app)?;
             let quit_item = MenuItemBuilder::with_id("quit", "退出").build(app)?;
             let menu = MenuBuilder::new(app)
-                .items(&[&lock_item, &unlock_item, &config_item, &quit_item])
+                .items(&[&lock_item, &unlock_item, &opacity_up, &opacity_down, &config_item, &quit_item])
                 .build()?;
 
             let _tray = TrayIconBuilder::new()
@@ -93,6 +97,16 @@ pub fn run() {
                     "unlock" => {
                         if let Some(win) = app.get_webview_window("overlay") {
                             let _ = win.set_ignore_cursor_events(false);
+                        }
+                    }
+                    "opacity_up" => {
+                        if let Some(win) = app.get_webview_window("overlay") {
+                            let _ = win.eval("window.__adjustOpacity(0.1)");
+                        }
+                    }
+                    "opacity_down" => {
+                        if let Some(win) = app.get_webview_window("overlay") {
+                            let _ = win.eval("window.__adjustOpacity(-0.1)");
                         }
                     }
                     "config" => {

@@ -67,7 +67,8 @@
 
         let config = {
             items: [],
-            server: { ip: '127.0.0.1', port: 8080, token: 'secret123' }
+            server: { ip: '127.0.0.1', port: 26666, token: 'monball' },
+            opacity: 0.65
         };
 
         const container = document.getElementById('container');
@@ -80,8 +81,23 @@
             } catch (e) {
                 console.warn('加载配置失败，使用默认值:', e);
             }
+            applyOpacity(config.opacity || 0.65);
             render();
         }
+
+        // 透明度控制
+        function applyOpacity(val) {
+            val = Math.max(0.1, Math.min(1.0, val));
+            config.opacity = val;
+            container.style.background = 'rgba(15, 15, 20, ' + val + ')';
+        }
+
+        // 暴露给 Rust 端调用的透明度调节函数
+        window.__adjustOpacity = function(delta) {
+            applyOpacity((config.opacity || 0.65) + delta);
+            // 持久化到配置文件
+            invoke('save_config', { config: config }).catch(function() {});
+        };
 
         // 根据配置渲染指标行
         function render() {
@@ -103,7 +119,8 @@
                 cpu: stats.cpu_usage.toFixed(1) + '%',
                 mem: stats.mem_usage.toFixed(1) + '%',
                 disk: stats.disk_usage.toFixed(1) + '%',
-                net: formatNet(stats.net_rx_rate, stats.net_tx_rate)
+                net: formatNet(stats.net_rx_rate, stats.net_tx_rate),
+                temp: stats.cpu_temp != null ? stats.cpu_temp.toFixed(0) + '°C' : 'N/A'
             };
             config.items.filter(i => i.show).forEach(item => {
                 const el = document.getElementById('val-' + item.id);
