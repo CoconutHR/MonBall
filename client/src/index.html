@@ -72,12 +72,35 @@
         const container = document.getElementById('container');
         const errorEl = document.getElementById('error');
 
+        // 所有已知指标的默认定义
+        const DEFAULT_ITEMS = [
+            {id: 'cpu', label: 'CPU', displayLabel: '', show: true, fontSize: 13, color: '#ffffff'},
+            {id: 'mem', label: 'MEM', displayLabel: '', show: true, fontSize: 13, color: '#ffffff'},
+            {id: 'disk', label: 'DISK', displayLabel: '', show: true, fontSize: 13, color: '#ffffff'},
+            {id: 'net', label: 'NET', displayLabel: '', show: true, fontSize: 13, color: '#ffffff'},
+            {id: 'cpu_temp', label: 'CPU温度', displayLabel: '', show: true, fontSize: 13, color: '#ffffff'},
+            {id: 'acpi_temp', label: '主板温度', displayLabel: '', show: false, fontSize: 13, color: '#ffffff'},
+            {id: 'wifi_temp', label: 'WiFi温度', displayLabel: '', show: false, fontSize: 13, color: '#ffffff'}
+        ];
+
+        // 合并配置：确保所有已知指标都存在，保留用户自定义设置
+        function mergeItems(savedItems) {
+            const savedMap = {};
+            (savedItems || []).forEach(function(item) { savedMap[item.id] = item; });
+            return DEFAULT_ITEMS.map(function(def) {
+                if (savedMap[def.id]) return savedMap[def.id];
+                return def;
+            });
+        }
+
         // 加载配置
         async function loadConfig() {
             try {
                 config = await invoke('read_config');
                 // 确保 window 字段存在
                 if (!config.window) config.window = { x: null, y: null };
+                // 合并新增的指标项（兼容旧配置）
+                config.items = mergeItems(config.items);
             } catch (e) {
                 console.warn('加载配置失败，使用默认值:', e);
             }
@@ -140,6 +163,7 @@
             invoke('read_config').then(function(newConfig) {
                 config = newConfig;
                 if (!config.window) config.window = { x: null, y: null };
+                config.items = mergeItems(config.items);
                 applyOpacity(config.opacity || 0.65);
                 render();
             }).catch(function() {});
