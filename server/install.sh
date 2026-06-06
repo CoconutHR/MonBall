@@ -42,11 +42,17 @@ if [ -z "$LATEST_TAG" ]; then
 fi
 info "最新版本: ${LATEST_TAG}"
 
+# ===== 停止已有服务（避免二进制文件被占用） =====
+if systemctl is-active --quiet ${SERVICE_NAME} 2>/dev/null; then
+    info "停止已运行的 ${SERVICE_NAME} 服务..."
+    systemctl stop ${SERVICE_NAME}
+fi
+
 # ===== 下载二进制文件 =====
 DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST_TAG}/${BINARY_NAME}"
 info "正在下载 ${BINARY_NAME}..."
 mkdir -p "${INSTALL_DIR}"
-curl -sSL "${DOWNLOAD_URL}" -o "${INSTALL_DIR}/${BINARY_NAME}"
+curl -fSL "${DOWNLOAD_URL}" -o "${INSTALL_DIR}/${BINARY_NAME}" || error "下载失败，请检查网络或 Release 是否存在"
 chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
 info "已安装到 ${INSTALL_DIR}/${BINARY_NAME}"
 
