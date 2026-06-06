@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%;
+            background: transparent;
+            overflow: hidden;
+            font-family: 'Segoe UI', 'Consolas', monospace;
+            color: #fff;
+            user-select: none;
+        }
+        #container {
+            display: flex;
+            flex-direction: column;
+            padding: 12px 14px;
+            background: rgba(15, 15, 20, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            width: 100%;
+            height: 100%;
+            gap: 6px;
+            cursor: default;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            line-height: 1.5;
+            padding: 2px 0;
+        }
+        .stat-label {
+            opacity: 0.7;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-weight: 600;
+            font-size: 13px;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        .error-msg {
+            font-size: 11px;
+            color: #ff6b6b;
+            text-align: center;
+            padding: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="error-msg" id="error" style="display:none;"></div>
+    </div>
+
+    <script>
+        // Tauri v2 全局 API（withGlobalTauri: true）
+        const { invoke } = window.__TAURI__.core;
+        const { getCurrentWindow } = window.__TAURI__.window;
+
+        const appWindow = getCurrentWindow();
+
+        let config = {
+            items: [],
+            server: { ip: '127.0.0.1', port: 8080, token: 'secret123' }
+        };
+
+        const container = document.getElementById('container');
+        const errorEl = document.getElementById('error');
+
+        // 加载配置
+        async function loadConfig() {
+            try {
+                config = await invoke('read_config');
+            } catch (e) {
+                console.warn('加载配置失败，使用默认值:', e);
+            }
+            render();
+        }
+
+        // 根据配置渲染指标行
+        function render() {
+            // 清除旧指标行，保留 error 元素
+            const rows = container.querySelectorAll('.stat-row');
+            rows.forEach(r => r.remove());
+
+            config.items.filter(i => i.show).forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'stat-row';
+                row.innerHTML = '<span class="stat-label">' + item.label + '</span><span class="stat-value" id="val-' + item.id + '">--</span>';
+                container.appendChild(row);
+            });
+        }
+
+        // 更新数值
+        function updateStats(stats) {
+            const map = {
+                cpu: stats.cpu_usage.toFixed(1) + '%',
+                mem: stats.mem_usage.toFixed(1) + '%',
+                disk: stats.disk_usage.toFixed(1) + '%',
+                net: formatNet(stats.net_rx_rate, stats.net_tx_rate)
+            };
+            config.items.filter(i => i.show).forEach(item => {
+                const el = document.getElementById('val-' + item.id);
+                if (el) el.textContent = map[item.id] || '--';
+            });
+            errorEl.style.display = 'none';
+        }
+
+        function formatNet(rx, tx) {
+            const fmt = function(v) {
+                if (v >= 1048576) return (v / 1048576).toFixed(1) + ' M/s';
+                if (v >= 1024) return (v / 1024).toFixed(1) + ' K/s';
+                return v + ' B/s';
+            };
+            return '\u2193' + fmt(rx) + ' \u2191' + fmt(tx);
+        }
+
+        function showError(msg) {
+            errorEl.textContent = msg;
+            errorEl.style.display = 'block';
+        }
+
+        // 轮询获取数据
+        let pollTimer;
+        async function startPolling() {
+            const poll = async function() {
+                try {
+                    const stats = await invoke('fetch_stats', {
+                        ip: config.server.ip,
+                        port: config.server.port,
+                        token: config.server.token
+                    });
+                    updateStats(stats);
+                } catch (e) {
+                    showError('连接失败');
+                }
+            };
+            await poll();
+            pollTimer = setInterval(poll, 1000);
+        }
+
+        // 拖动控制：mousedown 启动拖动
+        document.body.addEventListener('mousedown', function(e) {
+            if (e.buttons === 1) {
+                appWindow.startDragging();
+            }
+        });
+
+        // 监听配置变化（窗口获得焦点时重载）
+        window.addEventListener('focus', async function() {
+            try {
+                config = await invoke('read_config');
+                render();
+            } catch (_) {}
+        });
+
+        // 启动
+        loadConfig().then(startPolling);
+
+        // 清理
+        window.addEventListener('beforeunload', function() {
+            clearInterval(pollTimer);
+        });
+    </script>
+</body>
+</html>
